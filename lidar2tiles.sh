@@ -29,18 +29,38 @@ for this_dsm in $DSM_PATTERN; do
 	fi
 done
 
-echo "Unzipping and creating VRT file for each ZIP file"
+echo "Unzipping files"
 for f in *.zip; do
 	dir=`basename $f .zip`
 	# unzip each file into its own directory
 	unzip -q $f -d $dir || exit 1
-	# create a VRT file for each directory
-	gdalbuildvrt $dir.vrt $dir/*.asc
 done
 
+echo
+echo "Combining files for each area."
+echo "Expect some warnings about missing files, which can be ignored."
+echo
+for grid in `ls $DSM_PATTERN | \
+	sed 's/LIDAR-DSM-.*M-\(.*\).zip/\1/' | \
+	sort -u`; do
+	gdalbuildvrt -resolution highest -a_srs EPSG:27700 \
+		LIDAR-DSM-combined-$grid.vrt \
+		LIDAR-DSM-2M-$grid/*.asc \
+		LIDAR-DSM-1M-$grid/*.asc \
+		LIDAR-DSM-50CM-$grid/*.asc \
+		LIDAR-DSM-25CM-$grid/*.asc
+	gdalbuildvrt -resolution highest -a_srs EPSG:27700 \
+		LIDAR-DTM-combined-$grid.vrt \
+		LIDAR-DTM-2M-$grid/*.asc \
+		LIDAR-DTM-1M-$grid/*.asc \
+		LIDAR-DTM-50CM-$grid/*.asc \
+		LIDAR-DTM-25CM-$grid/*.asc
+done
+
+echo
 echo "Calculating feature heights"
 # use command to prevent trailing *s if ls has been aliased to ls -F
-for f in `command ls $DSM_PATTERN | sed 's/.zip/.vrt/'`; do
+for f in `command ls *-DSM-combined-*.vrt`; do
 	# calculate surface minus terrain i.e. features
 	gdal_calc.py -A $f -B `echo $f | sed 's/DSM/DTM/'` \
 		--calc="A-B" \
@@ -48,22 +68,24 @@ for f in `command ls $DSM_PATTERN | sed 's/.zip/.vrt/'`; do
 		|| exit 1
 done
 
+echo
 echo "Creating VRT files for whole area"
 # assemble features GeoTIFFs into single VRT
-gdalbuildvrt LIDAR-features.vrt *-features.tiff
+gdalbuildvrt -resolution highest LIDAR-features.vrt *-features.tiff || exit 1
 
 # create new VRT using colour map
 gdaldem color-relief \
 	LIDAR-features.vrt colourmap.txt LIDAR-features-colour.vrt \
-	-alpha -of VRT
+	-alpha -of VRT || exit 1
 
+echo
 echo "Creating tiles"
 gdal2tiles.py LIDAR-features-colour.vrt tiles \
-	-z $MINZOOM-$MAXZOOM -w leaflet -s EPSG:27700
+	-z $MINZOOM-$MAXZOOM -w leaflet -s EPSG:27700 || exit 1
 
+echo
 echo "Removing intermediate files"
 # use command to prevent trailing *s if ls has been aliased to ls -F
 rm -rf `command ls $DSM_PATTERN | sed 's/.zip//'`
 rm -rf `command ls $DSM_PATTERN | sed 's/DSM/DTM/' | sed 's/.zip//'`
-rm -f `command ls $DSM_PATTERN | sed 's/.zip/.vrt/'`
-rm -f `command ls $DSM_PATTERN | sed 's/DSM/DTM/' | sed 's/.zip/.vrt/'`
+rm -f *combined*.vrt
