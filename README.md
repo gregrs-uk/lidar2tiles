@@ -8,7 +8,7 @@ Map tiles are coloured based on the height of surface features such as buildings
 
 ### Downloading LIDAR data
 
-* Download one or more ZIP files of LIDAR DSM data and their DTM equivalents from the [Environment Agency](http://environment.data.gov.uk/ds/survey) e.g. `LIDAR-DSM-1M-TR15ne.zip` and `LIDAR-DTM-1M-TR15ne.zip`. Place these ZIP files in the same directory as `lidar2tiles.sh`.
+* Download one or more ZIP files of LIDAR **Composite** DSM data and their DTM equivalents from the [Environment Agency](http://environment.data.gov.uk/ds/survey) e.g. `LIDAR-DSM-1M-TR15ne.zip` and `LIDAR-DTM-1M-TR15ne.zip`. Place these ZIP files in the same directory as `lidar2tiles.sh`.
 * If multiple resolutions of the same area are provided, the script will combine them, favouring higher-resolution data.
 * You may find the index shapefiles &ndash; which can be downloaded from [data.gov.uk](https://data.gov.uk/dataset/lidar-composite-dsm-2m1) &ndash; helpful in determining which resolutions to download.
 

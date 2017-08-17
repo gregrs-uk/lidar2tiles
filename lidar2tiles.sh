@@ -5,7 +5,7 @@
 MINZOOM=12
 MAXZOOM=17
 # DTM ZIP files should have same names but with 'DTM' instead of 'DSM'
-DSM_PATTERN="LIDAR-DSM-*.zip"
+DSM_PATTERN="LIDAR-DSM-*M-????[ns][ew].zip"
 
 # check that required applications are installed
 for name in unzip sed gdalbuildvrt gdal_calc.py gdaldem gdal2tiles.py; do
@@ -16,7 +16,9 @@ done
 # check that there is at least one DSM ZIP file
 for f in $DSM_PATTERN; do
 	if ! [ -f $f ]; then
-		echo "Cannot find any files matching $DSM_PATTERN"
+		echo "Cannot find any ZIP files with the expected filename. Please download some"
+		echo "'composite' data from http://environment.data.gov.uk/ds/survey and place the ZIP"
+		echo "files in the same directory as this script"
 		exit 1
 	fi
 done
